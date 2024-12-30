@@ -10,7 +10,6 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
-import schedule
 
 from django.contrib.auth import logout
 
