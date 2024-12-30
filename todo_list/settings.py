@@ -25,7 +25,8 @@ SECRET_KEY = 'd)=^c7!0-oqjmqve%(bt+p#sq6x*ipz2keh741j*-@f@_)f!1t'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['todolist-production-bfb3.up.railway.app']
+CSRF_TRUSTED_ORIGINS ['https://todolist-production-bfb3.up.railway.app']
 
 
 # Application definition
