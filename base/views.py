@@ -42,12 +42,21 @@ class RegisterPage(FormView):
         user = form.save()
         if user is not None:
             login(self.request, user)
+            print(f"User {user.username} registered and logged in successfully.")
         return super(RegisterPage, self).form_valid(form)
+
+    def form_invalid(self, form):
+        # Print the errors to the console for debugging
+        print("Registration failed. Errors:")
+        for field, errors in form.errors.items():
+            print(f"{field}: {', '.join(errors)}")
+        return super(RegisterPage, self).form_invalid(form)
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated:
             return redirect('tasks')
         return super(RegisterPage, self).get(*args, **kwargs)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TaskList(LoginRequiredMixin, ListView):
