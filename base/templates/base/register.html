@@ -6,22 +6,31 @@
 </div>
 
 <div class="card-body">
+    <!-- Display errors if there are any -->
+    {% if form.errors %}
+        <div style="color: red; margin-bottom: 15px;">
+            <ul>
+                {% for field, errors in form.errors.items %}
+                    <li><strong>{{ field|capfirst }}:</strong> {{ errors|join:", " }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
     <form method="POST">
-        <label>{{form.username.label}}</label>
-        {{form.username}}
+        {% csrf_token %}
+        <label>{{ form.username.label }}</label>
+        {{ form.username }}s
 
+        <label>{{ form.password1.label }}</label>
+        {{ form.password1 }}
 
-        <label>{{form.password1.label}}</label>
-        {{form.password1}}
+        <label>{{ form.password2.label }}</label>
+        {{ form.password2 }}
 
-        <label>{{form.password2.label}}</label>
-        {{form.password2}}
-        <input style="margin-top:10px ;" class="button" type="submit" value="Register">
+        <input style="margin-top: 10px;" class="button" type="submit" value="Register">
     </form>
     <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
 </div>
-
-
-
 
 {% endblock content %}
