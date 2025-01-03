@@ -87,24 +87,19 @@ class TaskCreate(LoginRequiredMixin, CreateView):
     fields = ['title', 'description', 'complete']
     success_url = reverse_lazy('tasks')
 
-        def form_valid(self, form):
+    def form_valid(self, form):
         form.instance.user = self.request.user
         print(f"Task Created: Title - {form.instance.title}, Description - {form.instance.description}, Complete - {form.instance.complete}")
-        from twilio.rest import Client
-
+        
+        # Twilio code for sending a message
         account_sid = 'AC9aa339278939d26296616d2ff2fba460'
         auth_token = 'b40d4854074d3c82cecee1df37605f2a'
         client = Client(account_sid, auth_token)
 
-        # message = client.messages.create(
-        #   from_='whatsapp:+14155238886',
-        #   content_sid='HXb5b62575e6e4ff6129ad7c8efe1f983e',
-        #   content_variables='{"1":"12/1","2":"3pm"}',
-        #   to='whatsapp:+918919426801'
-        # )
-        title=form.instance.title
-        title=title.upper()
-        title="*"+title+"*"
+        title = form.instance.title
+        title = title.upper()
+        title = "*" + title + "*"
+
         message2 = client.messages.create(
             from_='whatsapp:+14155238886',
             body=f'''{title}
@@ -112,7 +107,9 @@ class TaskCreate(LoginRequiredMixin, CreateView):
             Contents :{form.instance.description}''',
             to='whatsapp:+918919426801'
         )
+        
         return super(TaskCreate, self).form_valid(form)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TaskUpdate(LoginRequiredMixin, UpdateView):
