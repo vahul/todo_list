@@ -16,6 +16,7 @@ from .forms import PositionForm
 import pytz
 from django.utils import timezone
 from twilio.rest import Client
+from twilio.base.exceptions import TwilioRestException
 
 @csrf_exempt
 def logout_view(request):
@@ -46,7 +47,6 @@ class RegisterPage(FormView):
         return super(RegisterPage, self).form_valid(form)
 
     def form_invalid(self, form):
-        # Print the errors to the console for debugging
         print("Registration failed. Errors:")
         for field, errors in form.errors.items():
             print(f"{field}: {', '.join(errors)}")
@@ -56,7 +56,6 @@ class RegisterPage(FormView):
         if self.request.user.is_authenticated:
             return redirect('tasks')
         return super(RegisterPage, self).get(*args, **kwargs)
-
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TaskList(LoginRequiredMixin, ListView):
@@ -90,26 +89,30 @@ class TaskCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.user = self.request.user
         print(f"Task Created: Title - {form.instance.title}, Description - {form.instance.description}, Complete - {form.instance.complete}")
-        
-        # Twilio code for sending a message
+
         account_sid = 'AC9aa339278939d26296616d2ff2fba460'
         auth_token = 'b40d4854074d3c82cecee1df37605f2a'
         client = Client(account_sid, auth_token)
 
-        title = form.instance.title
-        title = title.upper()
-        title = "*" + title + "*"
+        try:
+            title = form.instance.title.upper()
+            title = "*" + title + "*"
 
-        message2 = client.messages.create(
-            from_='whatsapp:+14155238886',
-            body=f'''{title}
-            
-            Contents :{form.instance.description}''',
-            to='whatsapp:+918919426801'
-        )
-        
+            message = client.messages.create(
+                from_='whatsapp:+14155238886',
+                body=f'''{title}
+                
+                Contents :{form.instance.description}''',
+                to='whatsapp:+918919426801'
+            )
+            print("Message sent successfully:", message.sid)
+        except TwilioRestException as e:
+            print(f"Twilio Error: {e}")
+            print(f"Error Code: {e.code}, Message: {e.msg}")
+        except Exception as e:
+            print(f"Unexpected Error: {e}")
+
         return super(TaskCreate, self).form_valid(form)
-
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TaskUpdate(LoginRequiredMixin, UpdateView):
@@ -139,26 +142,29 @@ class TaskReorder(View):
 
 @csrf_exempt
 def send_uncompleted_tasks(request):
-    # Get current time in India timezone
     india_tz = pytz.timezone("Asia/Calcutta")
-    current_time = timezone.localtime(timezone.now()).astimezone(india_tz)  # Ensure time is in local timezone
+    current_time = timezone.localtime(timezone.now()).astimezone(india_tz)
 
-    # Filter uncompleted tasks
     uncompleted_tasks = Task.objects.filter(complete=False)
-    print(uncompleted_tasks)
+    task_titles = "*\n\n*".join([task.title for task in uncompleted_tasks]).upper()
 
-    # Create the message
-    task_titles = "*\n\n*".join([task.title for task in uncompleted_tasks])
-    task_titles=task_titles.upper()
-    # Send the message using Twilio
     account_sid = 'AC9aa339278939d26296616d2ff2fba460'
     auth_token = 'b40d4854074d3c82cecee1df37605f2a'
     client = Client(account_sid, auth_token)
-    message = client.messages.create(
-        from_='whatsapp:+14155238886',
-        body=f'''*{task_titles}*''',
-        to='whatsapp:+918919426801'
-    )
+
+    try:
+        message = client.messages.create(
+            from_='whatsapp:+14155238886',
+            body=f'''*{task_titles}*''',
+            to='whatsapp:+918919426801'
+        )
+        print("Message sent successfully:", message.sid)
+    except TwilioRestException as e:
+        print(f"Twilio Error: {e}")
+        print(f"Error Code: {e.code}, Message: {e.msg}")
+    except Exception as e:
+        print(f"Unexpected Error: {e}")
+
     return redirect('tasks')
 
 @csrf_exempt
