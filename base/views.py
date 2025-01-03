@@ -87,14 +87,29 @@ class TaskCreate(LoginRequiredMixin, CreateView):
     fields = ['title', 'description', 'complete']
     success_url = reverse_lazy('tasks')
 
-    def form_valid(self, form):
+        def form_valid(self, form):
         form.instance.user = self.request.user
-        client = Client('AC9aa339278939d26296616d2ff2fba460', 'b40d4854074d3c82cecee1df37605f2a')
-        title = form.instance.title.upper()
-        title = f"*{title}*"
-        client.messages.create(
+        print(f"Task Created: Title - {form.instance.title}, Description - {form.instance.description}, Complete - {form.instance.complete}")
+        from twilio.rest import Client
+
+        account_sid = 'AC9aa339278939d26296616d2ff2fba460'
+        auth_token = 'b40d4854074d3c82cecee1df37605f2a'
+        client = Client(account_sid, auth_token)
+
+        # message = client.messages.create(
+        #   from_='whatsapp:+14155238886',
+        #   content_sid='HXb5b62575e6e4ff6129ad7c8efe1f983e',
+        #   content_variables='{"1":"12/1","2":"3pm"}',
+        #   to='whatsapp:+918919426801'
+        # )
+        title=form.instance.title
+        title=title.upper()
+        title="*"+title+"*"
+        message2 = client.messages.create(
             from_='whatsapp:+14155238886',
-            body=f'''{title}\n\nContents: {form.instance.description}''',
+            body=f'''{title}
+            
+            Contents :{form.instance.description}''',
             to='whatsapp:+918919426801'
         )
         return super(TaskCreate, self).form_valid(form)
@@ -127,12 +142,22 @@ class TaskReorder(View):
 
 @csrf_exempt
 def send_uncompleted_tasks(request):
+    # Get current time in India timezone
     india_tz = pytz.timezone("Asia/Calcutta")
-    current_time = timezone.localtime(timezone.now()).astimezone(india_tz)
+    current_time = timezone.localtime(timezone.now()).astimezone(india_tz)  # Ensure time is in local timezone
+
+    # Filter uncompleted tasks
     uncompleted_tasks = Task.objects.filter(complete=False)
-    task_titles = "*\n\n*".join([task.title for task in uncompleted_tasks]).upper()
-    client = Client('AC9aa339278939d26296616d2ff2fba460', 'b40d4854074d3c82cecee1df37605f2a')
-    client.messages.create(
+    print(uncompleted_tasks)
+
+    # Create the message
+    task_titles = "*\n\n*".join([task.title for task in uncompleted_tasks])
+    task_titles=task_titles.upper()
+    # Send the message using Twilio
+    account_sid = 'AC9aa339278939d26296616d2ff2fba460'
+    auth_token = 'b40d4854074d3c82cecee1df37605f2a'
+    client = Client(account_sid, auth_token)
+    message = client.messages.create(
         from_='whatsapp:+14155238886',
         body=f'''*{task_titles}*''',
         to='whatsapp:+918919426801'
